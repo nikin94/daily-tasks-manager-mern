@@ -1,35 +1,25 @@
-import { Dispatch } from 'react'
-import axios from 'axios'
 import formatDistanceToNow from 'date-fns/formatDistanceToNow'
-import { Avatar, Box, Card, Typography } from '@mui/material'
+import {
+  Avatar,
+  Box,
+  Card,
+  Checkbox,
+  CircularProgress,
+  Typography
+} from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
-import { useAuthContext, useTasksContext } from '@/hooks'
 import { ITaskJSON } from '@/lib/interfaces/ITask'
-import { ITaskAction } from '@/lib/interfaces/ITaskAction'
-import { TaskActions } from '@/lib/enum'
-import API from '@/lib/API'
-
-const { BACKEND_API_URI, TASKS_API } = API
+import { useTaskCompletion, useTaskDelete } from '@/hooks'
+import { useState } from 'react'
 
 const TaskDetails = ({ task }: { task: ITaskJSON }) => {
-  const { dispatch }: { dispatch: Dispatch<ITaskAction> } = useTasksContext()
-  const { user }: { user: Record<string, string> } = useAuthContext()
+  const [completed, setCompleted] = useState(task.completed)
+  const { deleteTask, deleting } = useTaskDelete()
+  const { setCompletion } = useTaskCompletion()
 
-  const handleClick = async () => {
-    if (!user) return
-
-    const response = await axios.delete(
-      BACKEND_API_URI + TASKS_API + task._id,
-      {
-        headers: {
-          Authorization: `Bearer ${user.token}`
-        }
-      }
-    )
-
-    if (response.status === 200) {
-      dispatch({ type: TaskActions.DELETE_TASK, payload: response.data })
-    }
+  const handleCompletion = () => {
+    setCompletion(task._id, !completed)
+    setCompleted(!completed)
   }
 
   return (
@@ -43,7 +33,12 @@ const TaskDetails = ({ task }: { task: ITaskJSON }) => {
         justifyContent: 'space-between'
       }}
     >
-      <Box>
+      <Checkbox
+        checked={completed}
+        onChange={handleCompletion}
+        inputProps={{ 'aria-label': 'controlled' }}
+      />
+      <Box flex={1} sx={{ ml: 1 }}>
         <Typography variant='h6' component='h6' color='primary'>
           {task.title}
         </Typography>
@@ -53,10 +48,21 @@ const TaskDetails = ({ task }: { task: ITaskJSON }) => {
       </Box>
 
       <Avatar
-        onClick={handleClick}
-        sx={{ m: 1, cursor: 'pointer', bgcolor: 'secondary.main' }}
+        onClick={() => deleteTask(task._id)}
+        sx={{
+          m: 1,
+          cursor: 'pointer',
+          bgcolor: 'secondary.main',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
       >
-        <DeleteIcon />
+        {deleting ? (
+          <CircularProgress sx={{ p: 1, color: 'white' }} />
+        ) : (
+          <DeleteIcon />
+        )}
       </Avatar>
     </Card>
   )

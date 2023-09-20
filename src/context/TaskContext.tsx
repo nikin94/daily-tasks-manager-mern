@@ -11,6 +11,14 @@ export const taskReducer = (state: any, action: ITaskAction) => {
       return { tasks: action.payload }
     case TaskActions.CREATE_TASK:
       return { tasks: [action.payload, ...state.tasks] }
+    case TaskActions.COMPLETE_TASK:
+      return {
+        tasks: state.tasks.map((t: ITaskJSON) =>
+          t._id === action.payload._id
+            ? { ...t, completed: action.payload.completed }
+            : t
+        )
+      }
     case TaskActions.DELETE_TASK:
       return {
         tasks: state.tasks.filter(
